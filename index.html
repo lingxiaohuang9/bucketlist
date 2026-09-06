@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Same Sky</title>
+<title>Steven loves Eyckie</title>
 <meta name="description" content="A private space for two people apart to count down to their next visit, send a thinking-of-you signal, and keep a shared list of things to do together.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext x='0' y='13' font-size='14'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -295,8 +295,7 @@
   <div class="topbar">
     <div class="brand">
       <span class="mark">🌙</span>
-      <h1>Same Sky</h1>
-      <span class="sub">for two, apart</span>
+      <h1>Steven loves Eyckie</h1>
     </div>
     <div class="bar-right">
       <span class="sync-pill" id="syncPill"><span class="sync-dot"></span><span id="syncLabel">connecting…</span></span>
@@ -877,7 +876,7 @@
       "Plan the exact date of the next trip to see each other"
     ];
     starters.forEach(function(text, i){
-      var item = {id: uid()+i, text: text, done:false, createdAt: Date.now()+i, doneAt:null, addedBy:"Same Sky"};
+      var item = {id: uid()+i, text: text, done:false, createdAt: Date.now()+i, doneAt:null, addedBy:"Steven loves Eyckie"};
       if (state.synced && state.db){
         state.db.doc("bucket/"+item.id).set(item).catch(function(){});
       } else {
@@ -1036,7 +1035,7 @@
     setSyncPill(true);
 
     function onSyncError(err){
-      console.error("Same Sky sync error:", err);
+      console.error("Sync error:", err);
       showToast("Sync problem — check the Firestore rules, or your connection.", 5000);
     }
 
