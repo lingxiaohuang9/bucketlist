@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Steven loves Eyckie</title>
 <meta name="description" content="A private space for two people apart to count down to their next visit, send a thinking-of-you signal, and keep a shared list of things to do together.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext x='0' y='13' font-size='14'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext x='0' y='13' font-size='14'%3E🥂%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,8 +49,13 @@
 
   /* ---------- top bar ---------- */
   .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:34px;}
-  .brand{display:flex; align-items:baseline; gap:9px;}
-  .brand .mark{font-size:20px;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .mark{
+    font-size:17px; display:inline-flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(160deg, #ffe4ea, var(--rose) 74%);
+    box-shadow:0 3px 8px -3px rgba(210,90,100,0.5), inset 0 1px 0 rgba(255,255,255,0.65);
+  }
   .brand h1{font-size:20px; font-weight:600; letter-spacing:0.01em;}
   .brand .sub{font-size:12px; color:var(--text-faint); font-family:"Sora"; margin-left:2px;}
   .sync-pill{
@@ -155,20 +160,53 @@
   /* ---------- signal ---------- */
   .signal-card{padding:24px 26px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
   .signal-btn{
-    flex-shrink:0; width:96px; height:96px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #fff1d6, var(--rose) 74%);
-    border:none; cursor:pointer; position:relative; color:var(--rose-ink);
-    font-family:"Fraunces"; font-weight:600; font-size:13px;
-    display:flex; align-items:center; justify-content:center; text-align:center;
-    box-shadow:0 0 0 0 rgba(242,144,125,0.5);
+    flex-shrink:0; width:112px; height:108px; position:relative;
+    background:none; border:none; cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center;
     transition:transform .15s;
   }
-  .signal-btn:hover{transform:scale(1.04);}
-  .signal-btn:active{transform:scale(0.97);}
-  .signal-btn.pulse{animation:pulseSend .7s ease-out;}
-  @keyframes pulseSend{
-    0%{box-shadow:0 0 0 0 rgba(242,144,125,0.55);}
-    100%{box-shadow:0 0 0 34px rgba(242,144,125,0);}
+  .signal-btn:hover{transform:scale(1.05);}
+  .signal-btn:active{transform:scale(0.96);}
+
+  .heart-body, .heart-ping{
+    position:absolute; top:50%; left:50%; width:92px; height:92px;
+    margin:-46px 0 0 -46px; border-radius:50%; overflow:hidden;
+  }
+  .heart-body{
+    z-index:1;
+    background:radial-gradient(circle at 50% 40%, #fffaf0 0%, #ffe9d8 24%, #f5b896 52%, var(--rose) 80%, #dd8f7e 100%);
+    filter:
+      drop-shadow(0 0 14px rgba(242,172,71,0.4))
+      drop-shadow(0 9px 11px rgba(180,120,80,0.32));
+  }
+  .heart-shine{
+    position:absolute; inset:-18% 8% 55% -22%;
+    background:radial-gradient(ellipse at 35% 25%, rgba(255,255,255,0.9), rgba(255,255,255,0) 60%);
+    transform:rotate(-18deg);
+  }
+  .heart-shadow{
+    position:absolute; inset:48% -10% -15% 30%;
+    background:radial-gradient(ellipse at 80% 85%, rgba(170,100,80,0.28), rgba(170,100,80,0) 60%);
+  }
+  .heart-sparkle{
+    position:absolute; z-index:2; color:#fffaf0; pointer-events:none;
+    text-shadow:0 0 5px rgba(255,255,255,0.95), 0 0 11px rgba(255,220,190,0.7);
+  }
+  .heart-sparkle.s1{ top:6px; left:20px; font-size:13px; }
+  .heart-sparkle.s2{ top:52px; left:9px; font-size:9px; opacity:.85; }
+  .heart-sparkle.s3{ top:34px; left:78px; font-size:8px; opacity:.8; }
+  .heart-ping{ z-index:1; background:var(--rose); opacity:0; }
+  .signal-btn.pulse .heart-ping{ animation:heartPulse .7s ease-out; }
+  @keyframes heartPulse{
+    0%{opacity:.5; transform:scale(1);}
+    100%{opacity:0; transform:scale(1.6);}
+  }
+
+  .signal-label{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-40%);
+    width:62px; z-index:3;
+    color:var(--rose-ink); font-family:"Fraunces"; font-weight:600;
+    font-size:11px; line-height:1.2; text-align:center;
   }
   .signal-copy{flex:1; min-width:200px;}
   .signal-copy p{margin:0; font-size:13.5px; color:var(--text-dim); line-height:1.5;}
@@ -294,7 +332,7 @@
 
   <div class="topbar">
     <div class="brand">
-      <span class="mark">🌙</span>
+      <span class="mark">🥂</span>
       <h1>Steven loves Eyckie</h1>
     </div>
     <div class="bar-right">
@@ -346,7 +384,17 @@
       <span class="hint">shows up for them in real time</span>
     </div>
     <div class="card signal-card">
-      <button class="signal-btn" id="signalBtn">thinking<br>of you</button>
+      <button class="signal-btn" id="signalBtn">
+        <span class="heart-ping" aria-hidden="true"></span>
+        <span class="heart-body" aria-hidden="true">
+          <span class="heart-shine"></span>
+          <span class="heart-shadow"></span>
+        </span>
+        <span class="heart-sparkle s1" aria-hidden="true">✦</span>
+        <span class="heart-sparkle s2" aria-hidden="true">✦</span>
+        <span class="heart-sparkle s3" aria-hidden="true">✦</span>
+        <span class="signal-label">thinking<br>of you</span>
+      </button>
       <div class="signal-copy">
         <p>One tap to let your loved one know: you're on my mind.</p>
         <ul class="feed" id="feed"></ul>
