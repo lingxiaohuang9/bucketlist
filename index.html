@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Same Sky</title>
+<meta name="description" content="A private space for two people apart to count down to their next visit, send a thinking-of-you signal, and keep a shared list of things to do together.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext x='0' y='13' font-size='14'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf3e2;
+    --bg-raised:#fffdf7;
+    --bg-raised-2:#f7ebce;
+    --line:rgba(72,58,34,0.14);
+    --line-soft:rgba(72,58,34,0.08);
+    --text:#463623;
+    --text-dim:#8c7c5e;
+    --text-faint:#c1b291;
+    --amber:#f3ac47;
+    --amber-ink:#4a2e0c;
+    --sky:#5fb9d9;
+    --rose:#f2907d;
+    --rose-ink:#4a1f16;
+    --shadow: 0 20px 44px -22px rgba(120,90,40,0.28);
+    color-scheme: light;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 12% -10%, rgba(95,185,217,0.16), transparent 60%),
+      radial-gradient(ellipse 750px 520px at 102% -6%, rgba(243,172,71,0.20), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:"Sora",system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3{font-family:"Fraunces",Georgia,serif; margin:0; text-wrap:balance;}
+  .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  .wrap{max-width:760px; margin:0 auto; padding:28px 20px 90px;}
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:34px;}
+  .brand{display:flex; align-items:baseline; gap:9px;}
+  .brand .mark{font-size:20px;}
+  .brand h1{font-size:20px; font-weight:600; letter-spacing:0.01em;}
+  .brand .sub{font-size:12px; color:var(--text-faint); font-family:"Sora"; margin-left:2px;}
+  .sync-pill{
+    font-size:11px; color:var(--text-dim); border:1px solid var(--line);
+    padding:4px 10px 4px 8px; border-radius:99px; display:flex; align-items:center; gap:6px;
+    background:var(--bg-raised);
+  }
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--sky);}
+  .sync-pill.offline .sync-dot{background:var(--text-faint);}
+
+  .icon-btn{
+    width:36px; height:36px; border-radius:50%; border:1px solid var(--line);
+    background:var(--bg-raised); color:var(--text-dim); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    transition:border-color .15s, color .15s;
+  }
+  .icon-btn:hover{color:var(--text); border-color:rgba(70,54,35,0.34);}
+  .icon-btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
+    outline:2px solid var(--sky); outline-offset:2px;
+  }
+  .bar-right{display:flex; align-items:center; gap:10px;}
+
+  /* ---------- sky card ---------- */
+  .card{
+    background:var(--bg-raised);
+    border:1px solid var(--line);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+  }
+  .sky-card{padding:26px 26px 22px;}
+  .clocks{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px;}
+  .clock{text-align:center;}
+  .clock .city{font-size:12.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.09em; font-weight:600;}
+  .clock .time{font-size:26px; font-weight:600; margin-top:6px;}
+  .clock .time .ampm{font-size:13px; color:var(--text-dim); margin-left:3px;}
+  .clock .day{font-size:11.5px; color:var(--text-faint); margin-top:3px;}
+  .gap-label{font-size:11px; color:var(--text-faint); text-align:center; white-space:nowrap; padding:0 2px;}
+  .gap-label b{color:var(--text-dim); display:block; font-size:15px; font-weight:600; font-family:"Fraunces"; margin-bottom:1px;}
+
+  .sky-arc{position:relative; height:10px; border-radius:99px; margin:20px 2px 8px; overflow:visible;
+    background:linear-gradient(90deg,
+      #33456f 0%, #5c73a1 15%, #91a7cf 28%, #f6cd93 38%, #fce8bb 47%, #fffaec 50%, #fce8bb 53%, #f6cd93 62%, #91a7cf 72%, #5c73a1 85%, #33456f 100%);
+  }
+  .arc-mark{position:absolute; top:50%; width:14px; height:14px; border-radius:50%; transform:translate(-50%,-50%);
+    border:2.5px solid var(--bg-raised); box-shadow:0 0 0 1px rgba(0,0,0,0.25);}
+  .arc-mark.a{background:var(--amber);}
+  .arc-mark.b{background:var(--sky);}
+
+  .hero{margin-top:30px; text-align:center;}
+  .hero .eyebrow{font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-faint); font-weight:600;}
+  .flap-row{display:flex; justify-content:center; gap:7px; margin:14px 0 10px; flex-wrap:wrap;}
+  .flap{
+    background:linear-gradient(180deg, #ffffff, var(--bg-raised-2));
+    border:1px solid var(--line); border-top:3px solid var(--amber); border-radius:10px;
+    width:56px; height:74px; display:flex; align-items:center; justify-content:center;
+    font-size:38px; font-weight:600; position:relative; color:var(--text);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 10px 20px -12px rgba(120,90,40,0.35);
+  }
+  .flap::after{content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(70,54,35,0.12);}
+  .flap.in{animation:flapin .5s cubic-bezier(.2,.8,.2,1) backwards;}
+  @keyframes flapin{
+    0%{transform:rotateX(90deg); opacity:0;}
+    60%{transform:rotateX(-8deg); opacity:1;}
+    100%{transform:rotateX(0deg);}
+  }
+  .hero .caption{font-size:14px; color:var(--text-dim);}
+  .hero .caption b{color:var(--text);}
+
+  .flap-row.small .flap{
+    width:42px; height:56px; font-size:26px; border-radius:8px; border-top:3px solid var(--sky);
+  }
+  .reached{padding:4px 0 2px;}
+  .reached p{margin:0; font-size:14px; color:var(--text-dim);}
+  .reached .btn{margin-left:8px;}
+
+  .setday{margin-top:18px; padding:16px; border-radius:14px; background:var(--bg-raised-2); border:1px dashed var(--line);}
+  .setday p{margin:0 0 10px; font-size:13.5px; color:var(--text-dim);}
+  .setday form{display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
+
+  input[type=text], input[type=date], select{
+    background:var(--bg); border:1px solid var(--line); color:var(--text);
+    border-radius:9px; padding:9px 12px; font-size:14px; font-family:"Sora";
+  }
+  input::placeholder{color:var(--text-faint);}
+
+  .btn{
+    border:none; border-radius:9px; padding:9px 16px; font-size:14px; font-weight:600;
+    cursor:pointer; transition:transform .12s, filter .12s;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-amber{background:var(--amber); color:var(--amber-ink);}
+  .btn-amber:hover{filter:brightness(1.07);}
+  .btn-ghost{background:transparent; color:var(--text-dim); border:1px solid var(--line);}
+  .btn-ghost:hover{color:var(--text); border-color:rgba(70,54,35,0.34);}
+
+  /* ---------- section heading ---------- */
+  .section{margin-top:40px;}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;}
+  .section-head h2{font-size:19px; font-weight:600;}
+  .section-head .hint{font-size:12.5px; color:var(--text-faint);}
+
+  /* ---------- signal ---------- */
+  .signal-card{padding:24px 26px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
+  .signal-btn{
+    flex-shrink:0; width:96px; height:96px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff1d6, var(--rose) 74%);
+    border:none; cursor:pointer; position:relative; color:var(--rose-ink);
+    font-family:"Fraunces"; font-weight:600; font-size:13px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    box-shadow:0 0 0 0 rgba(242,144,125,0.5);
+    transition:transform .15s;
+  }
+  .signal-btn:hover{transform:scale(1.04);}
+  .signal-btn:active{transform:scale(0.97);}
+  .signal-btn.pulse{animation:pulseSend .7s ease-out;}
+  @keyframes pulseSend{
+    0%{box-shadow:0 0 0 0 rgba(242,144,125,0.55);}
+    100%{box-shadow:0 0 0 34px rgba(242,144,125,0);}
+  }
+  .signal-copy{flex:1; min-width:200px;}
+  .signal-copy p{margin:0; font-size:13.5px; color:var(--text-dim); line-height:1.5;}
+  .feed{list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .feed li{font-size:13px; color:var(--text-dim); display:flex; gap:8px; align-items:baseline;}
+  .feed li .who{color:var(--text); font-weight:600;}
+  .feed li .when{color:var(--text-faint); margin-left:auto; font-size:12px;}
+  .feed .empty{color:var(--text-faint); font-style:italic;}
+
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translate(-50%,20px);
+    background:var(--bg-raised-2); border:1px solid var(--line); color:var(--text);
+    padding:13px 20px; border-radius:14px; box-shadow:var(--shadow);
+    font-size:14px; opacity:0; pointer-events:none; transition:opacity .35s, transform .35s;
+    z-index:50; max-width:88vw; text-align:center;
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+
+  /* ---------- bucket list ---------- */
+  .add-row{display:flex; gap:8px; margin-bottom:16px;}
+  .add-row input{flex:1;}
+
+  .filters{display:flex; gap:6px; margin-bottom:16px;}
+  .pill{
+    border:1px solid var(--line); background:transparent; color:var(--text-dim);
+    border-radius:99px; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .pill.active{background:var(--bg-raised-2); color:var(--text); border-color:rgba(70,54,35,0.34);}
+
+  .postcards{display:flex; flex-direction:column; gap:10px;}
+  .postcard{
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; display:flex; align-items:flex-start; gap:12px;
+    position:relative; overflow:hidden;
+  }
+  .postcard::before{
+    content:""; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:3px;
+    background:var(--sky);
+  }
+  .postcard.done::before{background:var(--text-faint);}
+  .postcard.done{opacity:0.55;}
+  .stamp{
+    flex-shrink:0; width:24px; height:24px; border-radius:50%; margin-top:2px; margin-left:6px;
+    border:2px solid rgba(70,54,35,0.32); background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; color:var(--bg);
+    transition:background .15s, border-color .15s;
+  }
+  .stamp.checked{background:var(--amber); border-color:var(--amber);}
+  .stamp svg{width:13px; height:13px; opacity:0; transition:opacity .1s;}
+  .stamp.checked svg{opacity:1;}
+  .pc-body{flex:1; min-width:0;}
+  .pc-text{font-size:14.5px; line-height:1.4;}
+  .postcard.done .pc-text{text-decoration:line-through; text-decoration-color:var(--text-faint);}
+  .pc-meta{font-size:11.5px; color:var(--text-faint); margin-top:4px;}
+  .pc-photo{
+    flex-shrink:0; width:34px; height:34px; border-radius:8px; margin-top:1px; padding:0;
+    border:1.5px dashed rgba(70,54,35,0.32); background:var(--bg-raised-2); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; color:var(--text-faint);
+    overflow:hidden; transition:border-color .15s, color .15s;
+  }
+  .pc-photo:hover{color:var(--text-dim); border-color:rgba(70,54,35,0.5);}
+  .pc-photo svg{width:16px; height:16px;}
+  .pc-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+  .pc-photo.has-photo{border-style:solid; border-color:var(--line);}
+  .pc-del{
+    background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:15px;
+    padding:2px 6px; border-radius:6px; flex-shrink:0;
+  }
+  .pc-del:hover{color:var(--rose); background:rgba(242,144,125,0.14);}
+  .list-empty{color:var(--text-faint); font-size:13.5px; padding:20px 4px; text-align:center;}
+
+  /* ---------- photo lightbox ---------- */
+  .lightbox-scrim{position:fixed; inset:0; background:rgba(20,14,6,0.6); z-index:60; opacity:0; pointer-events:none; transition:opacity .2s;}
+  .lightbox-scrim.open{opacity:1; pointer-events:auto;}
+  .lightbox{
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.96);
+    width:min(420px, calc(100vw - 40px)); background:var(--bg-raised); border-radius:18px;
+    border:1px solid var(--line); box-shadow:var(--shadow); padding:16px; z-index:61;
+    opacity:0; pointer-events:none; transition:opacity .18s, transform .18s;
+  }
+  .lightbox.open{opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto;}
+  .lightbox img{width:100%; max-height:56vh; object-fit:contain; border-radius:12px; display:block; background:var(--bg-raised-2);}
+  .lightbox-meta{font-size:12.5px; color:var(--text-faint); margin-top:10px; text-align:center;}
+  .lightbox-actions{display:flex; justify-content:center; gap:8px; margin-top:14px; flex-wrap:wrap;}
+
+  /* ---------- settings popover ---------- */
+  .popover-scrim{position:fixed; inset:0; background:rgba(6,8,20,0.55); z-index:40; opacity:0; pointer-events:none; transition:opacity .2s;}
+  .popover-scrim.open{opacity:1; pointer-events:auto;}
+  .popover{
+    position:fixed; top:70px; right:20px; width:min(340px, calc(100vw - 40px));
+    background:var(--bg-raised-2); border:1px solid var(--line); border-radius:16px;
+    box-shadow:var(--shadow); padding:20px; z-index:41;
+    opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .18s, transform .18s;
+  }
+  .popover.open{opacity:1; transform:translateY(0); pointer-events:auto;}
+  .popover h3{font-size:15px; margin-bottom:14px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:11.5px; color:var(--text-dim); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;}
+  .field input, .field select{width:100%;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .popover-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+
+  footer{text-align:center; margin-top:56px; font-size:12px; color:var(--text-faint);}
+
+  @media (max-width:480px){
+    .clocks{grid-template-columns:1fr auto 1fr;}
+    .clock .time{font-size:21px;}
+    .flap{width:44px; height:60px; font-size:29px; border-radius:8px;}
+    .signal-card{flex-direction:column; text-align:center;}
+    .signal-copy{text-align:center;}
+    .feed li{flex-wrap:wrap;}
+    .feed li .when{margin-left:0;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .flap.in{animation:none;}
+    .signal-btn.pulse{animation:none;}
+    *{transition-duration:0.01ms !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark">🌙</span>
+      <h1>Same Sky</h1>
+      <span class="sub">for two, apart</span>
+    </div>
+    <div class="bar-right">
+      <span class="sync-pill" id="syncPill"><span class="sync-dot"></span><span id="syncLabel">connecting…</span></span>
+      <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
+    </div>
+  </div>
+
+  <div class="card sky-card">
+    <div class="clocks">
+      <div class="clock">
+        <div class="city" id="cityALabel">City A</div>
+        <div class="time mono" id="cityATime">--:--</div>
+        <div class="day" id="cityADay">&nbsp;</div>
+      </div>
+      <div class="gap-label"><b id="gapHours">—</b>apart</div>
+      <div class="clock">
+        <div class="city" id="cityBLabel">City B</div>
+        <div class="time mono" id="cityBTime">--:--</div>
+        <div class="day" id="cityBDay">&nbsp;</div>
+      </div>
+    </div>
+    <div class="sky-arc">
+      <div class="arc-mark a" id="arcA" style="left:25%"></div>
+      <div class="arc-mark b" id="arcB" style="left:75%"></div>
+    </div>
+
+    <div class="hero" id="nextHero">
+      <div class="eyebrow">next time together</div>
+      <div class="flap-row small" id="nextFlapRow"></div>
+      <div class="caption" id="nextCaption">&nbsp;</div>
+
+      <div class="setday" id="setNext" hidden>
+        <p>When do you two see each other next? We'll count it down together.</p>
+        <form id="setNextForm">
+          <input type="date" id="nextDateInput" required>
+          <button class="btn btn-amber" type="submit">Start the countdown</button>
+        </form>
+      </div>
+      <div class="reached" id="reachedBlock" hidden>
+        <p>You're together again — enjoy it. <button class="btn btn-ghost" id="clearNextBtn" type="button">Plan the next one</button></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Send a signal</h2>
+      <span class="hint">shows up for them in real time</span>
+    </div>
+    <div class="card signal-card">
+      <button class="signal-btn" id="signalBtn">thinking<br>of you</button>
+      <div class="signal-copy">
+        <p>One tap to let your loved one know: you're on my mind.</p>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>The list</h2>
+      <span class="hint" id="listCount">0 things, 0 done</span>
+    </div>
+    <div class="add-row">
+      <input type="text" id="addInput" placeholder="Add something you both want to do…" maxlength="140">
+      <button class="btn btn-amber" id="addBtn">Add</button>
+    </div>
+    <div class="filters">
+      <button class="pill active" data-filter="all">All</button>
+      <button class="pill" data-filter="open">To do</button>
+      <button class="pill" data-filter="done">Done</button>
+    </div>
+    <div class="postcards" id="postcards"></div>
+  </div>
+
+  <footer>Just the two of you — anyone with this link can read and add. Keep the link between you.</footer>
+</div>
+
+<input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+
+<div class="lightbox-scrim" id="lightboxScrim"></div>
+<div class="lightbox" id="lightbox" role="dialog" aria-label="Photo">
+  <img id="lightboxImg" src="" alt="Proof photo">
+  <div class="lightbox-meta" id="lightboxMeta"></div>
+  <div class="lightbox-actions">
+    <button class="btn btn-ghost" id="lightboxRemove" type="button">Remove</button>
+    <button class="btn btn-ghost" id="lightboxReplace" type="button">Replace</button>
+    <button class="btn btn-amber" id="lightboxClose" type="button">Close</button>
+  </div>
+</div>
+
+<div class="popover-scrim" id="scrim"></div>
+<div class="popover" id="popover" role="dialog" aria-label="Settings">
+  <h3>Settings</h3>
+  <div class="field">
+    <label for="nameInput">Your name (this device only)</label>
+    <input type="text" id="nameInput" placeholder="e.g. Steven" maxlength="24">
+  </div>
+  <div class="field">
+    <label for="nextDateInput2">Next time together</label>
+    <input type="date" id="nextDateInput2">
+  </div>
+  <div class="field">
+    <div class="two-col">
+      <div>
+        <label for="cityAName">Your city</label>
+        <input type="text" id="cityAName" placeholder="Cambridge" maxlength="24">
+      </div>
+      <div>
+        <label for="cityATz">Your time zone</label>
+        <select id="cityATz"></select>
+      </div>
+    </div>
+  </div>
+  <div class="field">
+    <div class="two-col">
+      <div>
+        <label for="cityBName">Their city</label>
+        <input type="text" id="cityBName" placeholder="Shanghai" maxlength="24">
+      </div>
+      <div>
+        <label for="cityBTz">Their time zone</label>
+        <select id="cityBTz"></select>
+      </div>
+    </div>
+  </div>
+  <div class="popover-actions">
+    <button class="btn btn-ghost" id="popCancel" type="button">Close</button>
+    <button class="btn btn-amber" id="popSave" type="button">Save</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase (compat build — same doc/collection/onSnapshot shape the app already expects) -->
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- Your Firebase project config (safe to be public; access is controlled by Firestore rules) ----
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCyr434beQM3tjxgWgqTU-zbMTDxwM5evg",
+    authDomain: "bucket-list-1a049.firebaseapp.com",
+    projectId: "bucket-list-1a049",
+    storageBucket: "bucket-list-1a049.firebasestorage.app",
+    messagingSenderId: "887542410674",
+    appId: "1:887542410674:web:bca50520e1abd1e23808ab",
+    measurementId: "G-9EKDCLKWYT"
+  };
+
+  var TZ_OPTIONS = [
+    ["America/Los_Angeles","Los Angeles"],["America/Denver","Denver"],
+    ["America/Chicago","Chicago"],["America/New_York","New York / Boston"],
+    ["America/Sao_Paulo","São Paulo"],["Europe/London","London"],
+    ["Europe/Paris","Paris / Berlin"],["Europe/Moscow","Moscow"],
+    ["Asia/Dubai","Dubai"],["Asia/Kolkata","Mumbai / Delhi"],
+    ["Asia/Bangkok","Bangkok"],["Asia/Shanghai","Shanghai / Beijing"],
+    ["Asia/Hong_Kong","Hong Kong"],["Asia/Singapore","Singapore"],
+    ["Asia/Tokyo","Tokyo"],["Asia/Seoul","Seoul"],
+    ["Australia/Sydney","Sydney"],["Pacific/Auckland","Auckland"]
+  ];
+
+  var DEFAULTS = {
+    nextMeet: null,
+    cityA: {label:"Cambridge", tz:"America/New_York"},
+    cityB: {label:"Shanghai", tz:"Asia/Shanghai"}
+  };
+
+  var LS_NAME = "sameSky.name";
+  var LS_LOCAL_SETTINGS = "sameSky.localSettings";
+  var LS_LOCAL_BUCKET = "sameSky.localBucket";
+  var LS_LOCAL_PINGS = "sameSky.localPings";
+  var LS_SEEDED = "sameSky.seeded";
+
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var state = {
+    db: null,
+    synced: false,
+    myName: localStorage.getItem(LS_NAME) || "",
+    settings: null,
+    bucket: [],
+    pings: [],
+    filter: "all",
+    lastSeenPingAt: Date.now(),
+    nextDaysShown: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  function readLocal(key, fallback){
+    try{ var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; }
+    catch(e){ return fallback; }
+  }
+  function writeLocal(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+  }
+
+  // ---------- normalization helpers (Firestore doc/query snapshots) ----------
+  function normDoc(x){
+    if (x == null) return null;
+    if (typeof x.data === "function"){ var d = x.data(); return d == null ? null : d; }
+    if (typeof x === "object" && "data" in x && x.data && typeof x.data === "object" && !Array.isArray(x.data)){
+      return x.data;
+    }
+    return x;
+  }
+  function normCollection(x){
+    if (x == null) return [];
+    if (Array.isArray(x)){
+      return x.map(function(item){
+        if (item && typeof item.data === "function"){
+          var d = item.data() || {};
+          return Object.assign({id:item.id}, d);
+        }
+        return item;
+      });
+    }
+    if (Array.isArray(x.docs)){
+      return x.docs.map(function(d){
+        var data = typeof d.data === "function" ? (d.data() || {}) : (d.data || d);
+        return Object.assign({id: d.id != null ? d.id : data.id}, data);
+      });
+    }
+    if (typeof x === "object"){
+      return Object.keys(x).map(function(k){
+        var v = x[k] || {};
+        return Object.assign({id: v.id != null ? v.id : k}, v);
+      });
+    }
+    return [];
+  }
+
+  // ---------- toast ----------
+  var toastTimer = null;
+  function showToast(msg, ms){
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, ms || 3200);
+  }
+
+  // ---------- settings ----------
+  function applySettings(s){
+    state.settings = s || DEFAULTS;
+    var cA = state.settings.cityA || DEFAULTS.cityA;
+    var cB = state.settings.cityB || DEFAULTS.cityB;
+    $("cityALabel").textContent = cA.label || "City A";
+    $("cityBLabel").textContent = cB.label || "City B";
+    renderNextMeet();
+  }
+
+  function saveSettingsPartial(partial){
+    var merged = Object.assign({}, DEFAULTS, state.settings || {}, partial);
+    merged.cityA = Object.assign({}, DEFAULTS.cityA, (state.settings && state.settings.cityA) || {}, partial.cityA || {});
+    merged.cityB = Object.assign({}, DEFAULTS.cityB, (state.settings && state.settings.cityB) || {}, partial.cityB || {});
+    if (state.synced && state.db){
+      state.db.doc("app/settings").set(merged).catch(function(){ showToast("Couldn't save — check your connection."); });
+    } else {
+      writeLocal(LS_LOCAL_SETTINGS, merged);
+    }
+    applySettings(merged);
+  }
+
+  // ---------- clocks + sky arc ----------
+  function hourFraction(tz){
+    try{
+      var parts = new Intl.DateTimeFormat("en-US", {timeZone:tz, hour:"2-digit", minute:"2-digit", hour12:false}).formatToParts(new Date());
+      var h=0,m=0;
+      parts.forEach(function(p){ if(p.type==="hour") h=parseInt(p.value,10)%24; if(p.type==="minute") m=parseInt(p.value,10); });
+      return h + m/60;
+    }catch(e){ return 12; }
+  }
+  function tzOffsetMinutes(tz){
+    try{
+      var now = new Date();
+      var utc = new Date(now.toLocaleString("en-US", {timeZone:"UTC"}));
+      var loc = new Date(now.toLocaleString("en-US", {timeZone:tz}));
+      return Math.round((loc-utc)/60000);
+    }catch(e){ return 0; }
+  }
+  function fmtTime(tz){
+    try{
+      return new Intl.DateTimeFormat("en-US", {timeZone:tz, hour:"numeric", minute:"2-digit", hour12:true}).format(new Date());
+    }catch(e){ return "--:--"; }
+  }
+  function fmtDay(tz){
+    try{
+      return new Intl.DateTimeFormat("en-US", {timeZone:tz, weekday:"long"}).format(new Date());
+    }catch(e){ return ""; }
+  }
+
+  function tickClocks(){
+    if (!state.settings) return;
+    var cA = state.settings.cityA || DEFAULTS.cityA;
+    var cB = state.settings.cityB || DEFAULTS.cityB;
+    var timeA = fmtTime(cA.tz), timeB = fmtTime(cB.tz);
+    var pa = timeA.split(" "), pb = timeB.split(" ");
+    $("cityATime").innerHTML = esc(pa[0]) + (pa[1] ? ' <span class="ampm">'+esc(pa[1])+'</span>' : "");
+    $("cityBTime").innerHTML = esc(pb[0]) + (pb[1] ? ' <span class="ampm">'+esc(pb[1])+'</span>' : "");
+    $("cityADay").textContent = fmtDay(cA.tz);
+    $("cityBDay").textContent = fmtDay(cB.tz);
+
+    $("arcA").style.left = (hourFraction(cA.tz)/24*100).toFixed(1)+"%";
+    $("arcB").style.left = (hourFraction(cB.tz)/24*100).toFixed(1)+"%";
+
+    var diff = Math.round(Math.abs(tzOffsetMinutes(cA.tz) - tzOffsetMinutes(cB.tz))/60*10)/10;
+    $("gapHours").textContent = (diff % 1 === 0 ? diff.toFixed(0) : diff.toFixed(1)) + "h";
+  }
+
+  // ---------- next-meetup countdown ----------
+  function renderNextMeet(){
+    if (!state.settings || !state.settings.nextMeet){
+      $("nextFlapRow").innerHTML = "";
+      $("nextCaption").innerHTML = "&nbsp;";
+      $("setNext").hidden = false;
+      $("reachedBlock").hidden = true;
+      state.nextDaysShown = null;
+      return;
+    }
+    var target = new Date(state.settings.nextMeet + "T00:00:00");
+    var now = new Date();
+    var daysLeft = Math.ceil((target - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+
+    if (daysLeft <= 0){
+      $("setNext").hidden = true;
+      $("reachedBlock").hidden = false;
+      $("nextFlapRow").innerHTML = "";
+      $("nextCaption").innerHTML = "&nbsp;";
+      state.nextDaysShown = null;
+      return;
+    }
+    $("setNext").hidden = true;
+    $("reachedBlock").hidden = true;
+
+    var str = String(daysLeft);
+    if (state.nextDaysShown === str) return;
+    var row = $("nextFlapRow");
+    row.innerHTML = "";
+    for (var i=0;i<str.length;i++){
+      var el = document.createElement("div");
+      el.className = "flap mono" + (reduceMotion ? "" : " in");
+      if (!reduceMotion) el.style.animationDelay = (i*0.06)+"s";
+      el.textContent = str[i];
+      row.appendChild(el);
+    }
+    state.nextDaysShown = str;
+    $("nextCaption").innerHTML = "<b>"+daysLeft+"</b> day"+(daysLeft===1?"":"s")+" until you're together again — " +
+      target.toLocaleDateString(undefined, {month:"long", day:"numeric", year:"numeric"});
+  }
+
+  // ---------- signals / pings ----------
+  function relTime(ts){
+    var s = Math.floor((Date.now()-ts)/1000);
+    if (s < 45) return "just now";
+    if (s < 90) return "a minute ago";
+    var m = Math.round(s/60);
+    if (m < 60) return m+" min ago";
+    var h = Math.round(m/60);
+    if (h < 24) return h+"h ago";
+    var d = Math.round(h/24);
+    return d+"d ago";
+  }
+
+  function renderFeed(){
+    var list = state.pings.slice().sort(function(a,b){ return b.at - a.at; }).slice(0,8);
+    var el = $("feed");
+    if (!list.length){
+      el.innerHTML = '<li class="empty">No signals yet — be the first to send one.</li>';
+      return;
+    }
+    el.innerHTML = list.map(function(p){
+      var who = p.from === state.myName ? "You" : esc(p.from || "Someone");
+      return '<li><span class="who">'+who+'</span> sent a signal <span class="when">'+relTime(p.at)+'</span></li>';
+    }).join("");
+  }
+
+  function handleIncomingPings(list){
+    var incoming = list.filter(function(p){ return p.from && p.from !== state.myName; });
+    var newest = incoming.sort(function(a,b){ return b.at-a.at; })[0];
+    if (newest && newest.at > state.lastSeenPingAt){
+      state.lastSeenPingAt = newest.at;
+      showToast((newest.from || "Someone") + " is thinking of you ✨", 4200);
+    }
+  }
+
+  function sendPing(){
+    var btn = $("signalBtn");
+    if (!reduceMotion){
+      btn.classList.remove("pulse"); void btn.offsetWidth; btn.classList.add("pulse");
+    }
+    var p = {at: Date.now(), from: state.myName || "Someone"};
+    state.lastSeenPingAt = Math.max(state.lastSeenPingAt, p.at);
+    if (state.synced && state.db){
+      state.db.doc("pings/"+uid()).set(p).catch(function(){ showToast("Couldn't send — check your connection."); });
+    } else {
+      state.pings.push(p);
+      writeLocal(LS_LOCAL_PINGS, state.pings);
+      renderFeed();
+    }
+    showToast("Signal sent 💫", 1800);
+  }
+
+  // ---------- bucket list ----------
+  function renderList(){
+    var items = state.bucket.slice();
+    var open = items.filter(function(i){ return !i.done; }).length;
+    var done = items.length - open;
+    $("listCount").textContent = items.length + " thing" + (items.length===1?"":"s") + ", " + done + " done";
+
+    if (state.filter === "open") items = items.filter(function(i){ return !i.done; });
+    if (state.filter === "done") items = items.filter(function(i){ return i.done; });
+
+    items.sort(function(a,b){
+      if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+      return (a.createdAt||0) - (b.createdAt||0);
+    });
+
+    var el = $("postcards");
+    if (!items.length){
+      el.innerHTML = '<div class="list-empty">'+(state.filter==="done" ? "Nothing checked off yet." : "Nothing here yet — add your first dream above.")+'</div>';
+      return;
+    }
+    el.innerHTML = items.map(function(it){
+      var meta = (it.addedBy ? esc(it.addedBy) : "someone") + (it.done && it.doneAt ? " · done " + relTime(it.doneAt) : "");
+      var photoBtn = it.photo
+        ? '<button class="pc-photo has-photo" data-photo="'+esc(it.id)+'" aria-label="View proof photo"><img src="'+esc(it.photo)+'" alt=""></button>'
+        : '<button class="pc-photo" data-photo="'+esc(it.id)+'" aria-label="Add a proof photo">' +
+            '<svg viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>' +
+          '</button>';
+      return '<div class="postcard '+(it.done?"done":"")+'" data-id="'+esc(it.id)+'">' +
+        '<button class="stamp '+(it.done?"checked":"")+'" data-toggle="'+esc(it.id)+'" aria-label="Mark done">' +
+          '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 12L13 4" stroke="'+esc(getComputedStyle(document.documentElement).getPropertyValue("--amber-ink"))+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="pc-body"><div class="pc-text">'+esc(it.text)+'</div><div class="pc-meta">added by '+meta+(it.photo && it.photoBy ? " · photo by " + esc(it.photoBy) : "")+'</div></div>' +
+        photoBtn +
+        '<button class="pc-del" data-del="'+esc(it.id)+'" aria-label="Delete">×</button>' +
+      '</div>';
+    }).join("");
+  }
+
+  function addItem(text){
+    text = text.trim();
+    if (!text) return;
+    var item = {id: uid(), text: text, done:false, createdAt: Date.now(), doneAt: null, addedBy: state.myName || "someone"};
+    if (state.synced && state.db){
+      state.db.doc("bucket/"+item.id).set(item).catch(function(){ showToast("Couldn't add — try again."); });
+    } else {
+      state.bucket.push(item);
+      writeLocal(LS_LOCAL_BUCKET, state.bucket);
+      renderList();
+    }
+  }
+  function toggleItem(id){
+    var item = state.bucket.find(function(i){ return i.id === id; });
+    if (!item) return;
+    var updated = Object.assign({}, item, {done: !item.done, doneAt: !item.done ? Date.now() : null});
+    if (state.synced && state.db){
+      state.db.doc("bucket/"+id).set(updated).catch(function(){});
+    } else {
+      state.bucket = state.bucket.map(function(i){ return i.id===id ? updated : i; });
+      writeLocal(LS_LOCAL_BUCKET, state.bucket);
+      renderList();
+    }
+  }
+  function deleteItem(id){
+    if (state.synced && state.db){
+      state.db.doc("bucket/"+id).delete().catch(function(){});
+    } else {
+      state.bucket = state.bucket.filter(function(i){ return i.id !== id; });
+      writeLocal(LS_LOCAL_BUCKET, state.bucket);
+      renderList();
+    }
+  }
+
+  // ---------- proof photos ----------
+  var pendingPhotoId = null;
+  var lightboxItemId = null;
+
+  function resizeImageFile(file, maxDim, quality){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onerror = function(){ reject(new Error("read failed")); };
+      reader.onload = function(){
+        var img = new Image();
+        img.onerror = function(){ reject(new Error("decode failed")); };
+        img.onload = function(){
+          var w = img.width, h = img.height;
+          var scale = Math.min(1, maxDim / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = cw; canvas.height = ch;
+          var ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, cw, ch);
+          var q = quality;
+          var dataUrl = canvas.toDataURL("image/jpeg", q);
+          var tries = 0;
+          while (dataUrl.length > 700000 && q > 0.35 && tries < 4){
+            q -= 0.15; tries++;
+            dataUrl = canvas.toDataURL("image/jpeg", q);
+          }
+          resolve(dataUrl);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setItemPhoto(id, dataUrl){
+    var item = state.bucket.find(function(i){ return i.id === id; });
+    if (!item) return;
+    var patch = {photo: dataUrl, photoBy: state.myName || "someone"};
+    if (!item.done){ patch.done = true; patch.doneAt = Date.now(); }
+    var updated = Object.assign({}, item, patch);
+    if (state.synced && state.db){
+      state.db.doc("bucket/"+id).set(updated).catch(function(){
+        showToast("Couldn't save that photo — try a smaller one or check your connection.");
+      });
+    } else {
+      state.bucket = state.bucket.map(function(i){ return i.id===id ? updated : i; });
+      writeLocal(LS_LOCAL_BUCKET, state.bucket);
+      renderList();
+    }
+  }
+
+  function removeItemPhoto(id){
+    var item = state.bucket.find(function(i){ return i.id === id; });
+    if (!item) return;
+    var updated = Object.assign({}, item, {photo:null, photoBy:null});
+    if (state.synced && state.db){
+      state.db.doc("bucket/"+id).set(updated).catch(function(){});
+    } else {
+      state.bucket = state.bucket.map(function(i){ return i.id===id ? updated : i; });
+      writeLocal(LS_LOCAL_BUCKET, state.bucket);
+      renderList();
+    }
+  }
+
+  function openPhotoPicker(id){
+    var item = state.bucket.find(function(i){ return i.id === id; });
+    if (item && item.photo){ openLightbox(item); return; }
+    pendingPhotoId = id;
+    $("photoInput").value = "";
+    $("photoInput").click();
+  }
+
+  function openLightbox(item){
+    lightboxItemId = item.id;
+    $("lightboxImg").src = item.photo;
+    $("lightboxMeta").textContent = item.photoBy ? "photo by " + item.photoBy : "";
+    $("lightboxScrim").classList.add("open");
+    $("lightbox").classList.add("open");
+  }
+  function closeLightbox(){
+    $("lightboxScrim").classList.remove("open");
+    $("lightbox").classList.remove("open");
+    lightboxItemId = null;
+  }
+
+  function seedIfEmpty(){
+    if (readLocal(LS_SEEDED, false)) return;
+    writeLocal(LS_SEEDED, true);
+    if (state.bucket.length) return;
+    var starters = [
+      "Watch the sunrise and sunset on the same day, in our own time zones",
+      "Learn to say ‘I miss you’ in each other’s language",
+      "Plan the exact date of the next trip to see each other"
+    ];
+    starters.forEach(function(text, i){
+      var item = {id: uid()+i, text: text, done:false, createdAt: Date.now()+i, doneAt:null, addedBy:"Same Sky"};
+      if (state.synced && state.db){
+        state.db.doc("bucket/"+item.id).set(item).catch(function(){});
+      } else {
+        state.bucket.push(item);
+      }
+    });
+    if (!state.synced){ writeLocal(LS_LOCAL_BUCKET, state.bucket); renderList(); }
+  }
+
+  // ---------- settings popover wiring ----------
+  function populateTzSelects(){
+    [$("cityATz"), $("cityBTz")].forEach(function(sel){
+      sel.innerHTML = TZ_OPTIONS.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join("");
+    });
+  }
+  function openPopover(){
+    var cA = (state.settings && state.settings.cityA) || DEFAULTS.cityA;
+    var cB = (state.settings && state.settings.cityB) || DEFAULTS.cityB;
+    $("nameInput").value = state.myName || "";
+    $("nextDateInput2").value = (state.settings && state.settings.nextMeet) || "";
+    $("cityAName").value = cA.label || "";
+    $("cityATz").value = cA.tz || DEFAULTS.cityA.tz;
+    $("cityBName").value = cB.label || "";
+    $("cityBTz").value = cB.tz || DEFAULTS.cityB.tz;
+    $("scrim").classList.add("open");
+    $("popover").classList.add("open");
+  }
+  function closePopover(){
+    $("scrim").classList.remove("open");
+    $("popover").classList.remove("open");
+  }
+
+  // ---------- init ----------
+  function wireStaticUI(){
+    populateTzSelects();
+
+    $("settingsBtn").addEventListener("click", openPopover);
+    $("popCancel").addEventListener("click", closePopover);
+    $("scrim").addEventListener("click", closePopover);
+    $("popSave").addEventListener("click", function(){
+      state.myName = $("nameInput").value.trim();
+      writeLocal(LS_NAME, state.myName);
+      saveSettingsPartial({
+        nextMeet: $("nextDateInput2").value || null,
+        cityA: {label: $("cityAName").value.trim() || DEFAULTS.cityA.label, tz: $("cityATz").value},
+        cityB: {label: $("cityBName").value.trim() || DEFAULTS.cityB.label, tz: $("cityBTz").value}
+      });
+      renderFeed(); renderList();
+      closePopover();
+    });
+
+    $("setNextForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var v = $("nextDateInput").value;
+      if (!v) return;
+      saveSettingsPartial({nextMeet: v});
+    });
+    $("clearNextBtn").addEventListener("click", function(){
+      saveSettingsPartial({nextMeet: null});
+    });
+
+    $("signalBtn").addEventListener("click", sendPing);
+
+    $("addBtn").addEventListener("click", function(){
+      addItem($("addInput").value);
+      $("addInput").value = "";
+      $("addInput").focus();
+    });
+    $("addInput").addEventListener("keydown", function(e){
+      if (e.key === "Enter"){ addItem($("addInput").value); $("addInput").value=""; }
+    });
+
+    document.querySelectorAll(".pill").forEach(function(p){
+      p.addEventListener("click", function(){
+        document.querySelectorAll(".pill").forEach(function(x){ x.classList.remove("active"); });
+        p.classList.add("active");
+        state.filter = p.getAttribute("data-filter");
+        renderList();
+      });
+    });
+
+    $("postcards").addEventListener("click", function(e){
+      var t = e.target.closest("[data-toggle]");
+      if (t){ toggleItem(t.getAttribute("data-toggle")); return; }
+      var p = e.target.closest("[data-photo]");
+      if (p){ openPhotoPicker(p.getAttribute("data-photo")); return; }
+      var d = e.target.closest("[data-del]");
+      if (d){ deleteItem(d.getAttribute("data-del")); }
+    });
+
+    $("photoInput").addEventListener("change", function(e){
+      var file = e.target.files && e.target.files[0];
+      var id = pendingPhotoId;
+      pendingPhotoId = null;
+      if (!file || !id) return;
+      resizeImageFile(file, 480, 0.72).then(function(dataUrl){
+        setItemPhoto(id, dataUrl);
+      }).catch(function(){
+        showToast("Couldn't read that photo — try a different one.");
+      });
+    });
+
+    $("lightboxClose").addEventListener("click", closeLightbox);
+    $("lightboxScrim").addEventListener("click", closeLightbox);
+    $("lightboxReplace").addEventListener("click", function(){
+      var id = lightboxItemId;
+      closeLightbox();
+      if (!id) return;
+      pendingPhotoId = id;
+      $("photoInput").value = "";
+      $("photoInput").click();
+    });
+    $("lightboxRemove").addEventListener("click", function(){
+      var id = lightboxItemId;
+      closeLightbox();
+      if (id) removeItemPhoto(id);
+    });
+
+    if (!state.myName){
+      setTimeout(function(){
+        openPopover();
+        showToast("Welcome — tell us your name so signals and additions are attributed to you.", 5000);
+      }, 500);
+    }
+  }
+
+  function setSyncPill(ok){
+    var pill = $("syncPill");
+    pill.classList.toggle("offline", !ok);
+    $("syncLabel").textContent = ok ? "synced" : "this device only";
+  }
+
+  function startClockLoop(){
+    tickClocks();
+    setInterval(tickClocks, 1000);
+    setInterval(renderNextMeet, 60000);
+    setInterval(function(){ renderFeed(); }, 30000);
+  }
+
+  function initLocalMode(){
+    state.synced = false;
+    setSyncPill(false);
+    state.settings = readLocal(LS_LOCAL_SETTINGS, null);
+    state.bucket = readLocal(LS_LOCAL_BUCKET, []);
+    state.pings = readLocal(LS_LOCAL_PINGS, []);
+    applySettings(state.settings || DEFAULTS);
+    renderList();
+    renderFeed();
+    seedIfEmpty();
+    startClockLoop();
+  }
+
+  function initSyncedMode(db){
+    state.db = db;
+    state.synced = true;
+    setSyncPill(true);
+
+    function onSyncError(err){
+      console.error("Same Sky sync error:", err);
+      showToast("Sync problem — check the Firestore rules, or your connection.", 5000);
+    }
+
+    db.doc("app/settings").get().then(function(res){
+      var s = normDoc(res);
+      applySettings(s || DEFAULTS);
+      if (!s){
+        db.doc("app/settings").set(DEFAULTS).catch(function(){});
+      }
+    }).catch(onSyncError);
+
+    db.doc("app/settings").onSnapshot(function(res){
+      applySettings(normDoc(res) || DEFAULTS);
+    }, onSyncError);
+
+    db.collection("bucket").onSnapshot(function(res){
+      state.bucket = normCollection(res);
+      renderList();
+      seedIfEmpty();
+    }, onSyncError);
+
+    db.collection("pings").onSnapshot(function(res){
+      state.pings = normCollection(res);
+      renderFeed();
+      handleIncomingPings(state.pings);
+    }, onSyncError);
+
+    startClockLoop();
+  }
+
+  function init(){
+    wireStaticUI();
+    applySettings(DEFAULTS);
+
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      var fdb = firebase.firestore();
+      initSyncedMode(fdb);
+    }catch(e){
+      console.error("Firebase failed to initialize, falling back to this-device-only mode:", e);
+      initLocalMode();
+    }
+  }
+
+  if (document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
