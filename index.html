@@ -131,6 +131,7 @@
   .reached p{margin:0; font-size:14px; color:var(--text-dim);}
   .reached .btn{margin-left:8px;}
 
+  .next-actions{margin-top:8px;}
   .setday{margin-top:18px; padding:16px; border-radius:14px; background:var(--bg-raised-2); border:1px dashed var(--line);}
   .setday p{margin:0 0 10px; font-size:13.5px; color:var(--text-dim);}
   .setday form{display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
@@ -373,12 +374,16 @@
       <div class="eyebrow">next time together</div>
       <div class="flap-row small" id="nextFlapRow"></div>
       <div class="caption" id="nextCaption">&nbsp;</div>
+      <div class="next-actions" id="nextActions" hidden>
+        <button class="btn btn-ghost" id="changeDateBtn" type="button">Change date</button>
+      </div>
 
       <div class="setday" id="setNext" hidden>
         <p>When do you two see each other next? We'll count it down together.</p>
         <form id="setNextForm">
           <input type="date" id="nextDateInput" required>
-          <button class="btn btn-amber" type="submit">Start the countdown</button>
+          <button class="btn btn-amber" type="submit">Save the date</button>
+          <button class="btn btn-ghost" id="cancelDateBtn" type="button" hidden>Cancel</button>
         </form>
       </div>
       <div class="reached" id="reachedBlock" hidden>
@@ -454,16 +459,9 @@
       <button type="button" class="who-btn" data-who="Eyckie">Eyckie</button>
     </div>
   </div>
-  <div class="field">
-    <label for="nextDateInput2">Next time together</label>
-    <input type="date" id="nextDateInput2">
-  </div>
   <div class="popover-actions" style="justify-content:space-between;">
     <button class="btn-text-danger" id="clearPings" type="button">Clear signal history</button>
-    <div style="display:flex; gap:8px;">
-      <button class="btn btn-ghost" id="popCancel" type="button">Close</button>
-      <button class="btn btn-amber" id="popSave" type="button">Save</button>
-    </div>
+    <button class="btn btn-ghost" id="popCancel" type="button">Close</button>
   </div>
 </div>
 
@@ -524,7 +522,8 @@
     filter: "all",
     lastSeenPingAt: Date.now(),
     nextDaysShown: null,
-    feedExpanded: false
+    feedExpanded: false,
+    editingDate: false
   };
 
   function $(id){ return document.getElementById(id); }
@@ -658,10 +657,25 @@
 
   // ---------- next-meetup countdown ----------
   function renderNextMeet(){
-    if (!state.settings || !state.settings.nextMeet){
+    var hasDate = !!(state.settings && state.settings.nextMeet);
+
+    if (state.editingDate){
+      $("nextFlapRow").innerHTML = "";
+      $("nextCaption").innerHTML = "&nbsp;";
+      $("nextActions").hidden = true;
+      $("reachedBlock").hidden = true;
+      $("setNext").hidden = false;
+      $("cancelDateBtn").hidden = !hasDate;
+      state.nextDaysShown = null;
+      return;
+    }
+
+    if (!hasDate){
       $("nextFlapRow").innerHTML = "";
       $("nextCaption").innerHTML = "&nbsp;";
       $("setNext").hidden = false;
+      $("cancelDateBtn").hidden = true;
+      $("nextActions").hidden = true;
       $("reachedBlock").hidden = true;
       state.nextDaysShown = null;
       return;
@@ -672,6 +686,7 @@
 
     if (daysLeft <= 0){
       $("setNext").hidden = true;
+      $("nextActions").hidden = true;
       $("reachedBlock").hidden = false;
       $("nextFlapRow").innerHTML = "";
       $("nextCaption").innerHTML = "&nbsp;";
@@ -680,6 +695,7 @@
     }
     $("setNext").hidden = true;
     $("reachedBlock").hidden = true;
+    $("nextActions").hidden = false;
 
     var str = String(daysLeft);
     if (state.nextDaysShown === str) return;
@@ -967,7 +983,6 @@
     }
   }
   function openPopover(){
-    $("nextDateInput2").value = (state.settings && state.settings.nextMeet) || "";
     setWhoActive(state.myName);
     $("scrim").classList.add("open");
     $("popover").classList.add("open");
@@ -981,33 +996,39 @@
   function wireStaticUI(){
     var whoBtns = document.querySelectorAll(".who-btn");
     for (var wi=0; wi<whoBtns.length; wi++){
-      whoBtns[wi].addEventListener("click", function(){ setWhoActive(this.getAttribute("data-who")); });
+      whoBtns[wi].addEventListener("click", function(){
+        var who = this.getAttribute("data-who");
+        setWhoActive(who);
+        state.myName = who;
+        writeLocal(LS_NAME, state.myName);
+        renderFeed(); renderList();
+        closePopover();
+      });
     }
 
     $("settingsBtn").addEventListener("click", openPopover);
     $("popCancel").addEventListener("click", closePopover);
     $("scrim").addEventListener("click", closePopover);
     $("clearPings").addEventListener("click", clearPingHistory);
-    $("popSave").addEventListener("click", function(){
-      var activeWho = document.querySelector(".who-btn.active");
-      if (activeWho){
-        state.myName = activeWho.getAttribute("data-who");
-        writeLocal(LS_NAME, state.myName);
-      }
-      saveSettingsPartial({
-        nextMeet: $("nextDateInput2").value || null
-      });
-      renderFeed(); renderList();
-      closePopover();
-    });
 
     $("setNextForm").addEventListener("submit", function(e){
       e.preventDefault();
       var v = $("nextDateInput").value;
       if (!v) return;
+      state.editingDate = false;
       saveSettingsPartial({nextMeet: v});
     });
+    $("changeDateBtn").addEventListener("click", function(){
+      state.editingDate = true;
+      $("nextDateInput").value = (state.settings && state.settings.nextMeet) || "";
+      renderNextMeet();
+    });
+    $("cancelDateBtn").addEventListener("click", function(){
+      state.editingDate = false;
+      renderNextMeet();
+    });
     $("clearNextBtn").addEventListener("click", function(){
+      state.editingDate = false;
       saveSettingsPartial({nextMeet: null});
     });
 
