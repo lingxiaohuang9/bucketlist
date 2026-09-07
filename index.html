@@ -214,6 +214,11 @@
   .feed li{font-size:13px; color:var(--text-dim); display:flex; gap:8px; align-items:baseline;}
   .feed li .who{color:var(--text); font-weight:600;}
   .feed li .when{color:var(--text-faint); margin-left:auto; font-size:12px;}
+  .feed li.feed-toggle-row{justify-content:center;}
+  .feed-toggle{background:none; border:none; padding:2px 0 0; font-size:12.5px; color:var(--text-dim); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+  .feed-toggle:hover{color:var(--text);}
+  .btn-text-danger{background:none; border:none; padding:0; font-size:12.5px; color:var(--text-faint); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+  .btn-text-danger:hover{color:var(--rose-ink);}
   .feed .empty{color:var(--text-faint); font-style:italic;}
 
   .toast{
@@ -306,6 +311,10 @@
   .field label{display:block; font-size:11.5px; color:var(--text-dim); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;}
   .field input, .field select{width:100%;}
   .two-col{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .who-select{display:flex; gap:8px;}
+  .who-btn{flex:1; padding:11px 12px; border-radius:12px; border:1px solid var(--line); background:var(--bg-raised); color:var(--text-dim); font-family:"Sora",sans-serif; font-size:14px; cursor:pointer; transition:all .15s;}
+  .who-btn:hover{border-color:rgba(70,54,35,0.34); color:var(--text);}
+  .who-btn.active{background:var(--amber); color:var(--amber-ink); border-color:var(--amber); font-weight:600;}
   .popover-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
 
   footer{text-align:center; margin-top:56px; font-size:12px; color:var(--text-faint);}
@@ -439,40 +448,22 @@
 <div class="popover" id="popover" role="dialog" aria-label="Settings">
   <h3>Settings</h3>
   <div class="field">
-    <label for="nameInput">Your name (this device only)</label>
-    <input type="text" id="nameInput" placeholder="e.g. Steven" maxlength="24">
+    <label>Who are you?</label>
+    <div class="who-select" id="whoSelect">
+      <button type="button" class="who-btn" data-who="Steven">Steven</button>
+      <button type="button" class="who-btn" data-who="Eyckie">Eyckie</button>
+    </div>
   </div>
   <div class="field">
     <label for="nextDateInput2">Next time together</label>
     <input type="date" id="nextDateInput2">
   </div>
-  <div class="field">
-    <div class="two-col">
-      <div>
-        <label for="cityAName">Your city</label>
-        <input type="text" id="cityAName" placeholder="Cambridge" maxlength="24">
-      </div>
-      <div>
-        <label for="cityATz">Your time zone</label>
-        <select id="cityATz"></select>
-      </div>
+  <div class="popover-actions" style="justify-content:space-between;">
+    <button class="btn-text-danger" id="clearPings" type="button">Clear signal history</button>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" id="popCancel" type="button">Close</button>
+      <button class="btn btn-amber" id="popSave" type="button">Save</button>
     </div>
-  </div>
-  <div class="field">
-    <div class="two-col">
-      <div>
-        <label for="cityBName">Their city</label>
-        <input type="text" id="cityBName" placeholder="Shanghai" maxlength="24">
-      </div>
-      <div>
-        <label for="cityBTz">Their time zone</label>
-        <select id="cityBTz"></select>
-      </div>
-    </div>
-  </div>
-  <div class="popover-actions">
-    <button class="btn btn-ghost" id="popCancel" type="button">Close</button>
-    <button class="btn btn-amber" id="popSave" type="button">Save</button>
   </div>
 </div>
 
@@ -532,7 +523,8 @@
     pings: [],
     filter: "all",
     lastSeenPingAt: Date.now(),
-    nextDaysShown: null
+    nextDaysShown: null,
+    feedExpanded: false
   };
 
   function $(id){ return document.getElementById(id); }
@@ -719,16 +711,49 @@
   }
 
   function renderFeed(){
-    var list = state.pings.slice().sort(function(a,b){ return b.at - a.at; }).slice(0,8);
+    var list = state.pings.slice().sort(function(a,b){ return b.at - a.at; });
     var el = $("feed");
     if (!list.length){
       el.innerHTML = '<li class="empty">No signals yet — be the first to send one.</li>';
       return;
     }
-    el.innerHTML = list.map(function(p){
+    var visible = state.feedExpanded ? list.slice(0,50) : list.slice(0,3);
+    var html = visible.map(function(p){
       var who = p.from === state.myName ? "You" : esc(p.from || "Someone");
       return '<li><span class="who">'+who+'</span> sent a signal <span class="when">'+relTime(p.at)+'</span></li>';
     }).join("");
+    if (list.length > 3){
+      var remaining = list.length - visible.length;
+      html += '<li class="feed-toggle-row"><button type="button" class="feed-toggle" id="feedToggle">'+
+        (state.feedExpanded ? "Show less" : "Show "+remaining+" more") + '</button></li>';
+    }
+    el.innerHTML = html;
+    var toggleBtn = $("feedToggle");
+    if (toggleBtn){
+      toggleBtn.addEventListener("click", function(){
+        state.feedExpanded = !state.feedExpanded;
+        renderFeed();
+      });
+    }
+  }
+
+  function clearPingHistory(){
+    if (!window.confirm("Clear the entire signal history? This can't be undone.")) return;
+    state.feedExpanded = false;
+    if (state.synced && state.db){
+      var ids = state.pings.map(function(p){ return p.id; }).filter(Boolean);
+      ids.forEach(function(id){
+        state.db.doc("pings/"+id).delete().catch(function(){});
+      });
+      // Local copy updates via the live onSnapshot subscription; clear it now too so the UI feels instant.
+      state.pings = [];
+      renderFeed();
+    } else {
+      state.pings = [];
+      writeLocal(LS_LOCAL_PINGS, state.pings);
+      renderFeed();
+    }
+    showToast("Signal history cleared.");
   }
 
   function handleIncomingPings(list){
@@ -935,20 +960,15 @@
   }
 
   // ---------- settings popover wiring ----------
-  function populateTzSelects(){
-    [$("cityATz"), $("cityBTz")].forEach(function(sel){
-      sel.innerHTML = TZ_OPTIONS.map(function(o){ return '<option value="'+o[0]+'">'+o[1]+'</option>'; }).join("");
-    });
+  function setWhoActive(name){
+    var btns = document.querySelectorAll(".who-btn");
+    for (var i=0;i<btns.length;i++){
+      btns[i].classList.toggle("active", btns[i].getAttribute("data-who") === name);
+    }
   }
   function openPopover(){
-    var cA = (state.settings && state.settings.cityA) || DEFAULTS.cityA;
-    var cB = (state.settings && state.settings.cityB) || DEFAULTS.cityB;
-    $("nameInput").value = state.myName || "";
     $("nextDateInput2").value = (state.settings && state.settings.nextMeet) || "";
-    $("cityAName").value = cA.label || "";
-    $("cityATz").value = cA.tz || DEFAULTS.cityA.tz;
-    $("cityBName").value = cB.label || "";
-    $("cityBTz").value = cB.tz || DEFAULTS.cityB.tz;
+    setWhoActive(state.myName);
     $("scrim").classList.add("open");
     $("popover").classList.add("open");
   }
@@ -959,18 +979,23 @@
 
   // ---------- init ----------
   function wireStaticUI(){
-    populateTzSelects();
+    var whoBtns = document.querySelectorAll(".who-btn");
+    for (var wi=0; wi<whoBtns.length; wi++){
+      whoBtns[wi].addEventListener("click", function(){ setWhoActive(this.getAttribute("data-who")); });
+    }
 
     $("settingsBtn").addEventListener("click", openPopover);
     $("popCancel").addEventListener("click", closePopover);
     $("scrim").addEventListener("click", closePopover);
+    $("clearPings").addEventListener("click", clearPingHistory);
     $("popSave").addEventListener("click", function(){
-      state.myName = $("nameInput").value.trim();
-      writeLocal(LS_NAME, state.myName);
+      var activeWho = document.querySelector(".who-btn.active");
+      if (activeWho){
+        state.myName = activeWho.getAttribute("data-who");
+        writeLocal(LS_NAME, state.myName);
+      }
       saveSettingsPartial({
-        nextMeet: $("nextDateInput2").value || null,
-        cityA: {label: $("cityAName").value.trim() || DEFAULTS.cityA.label, tz: $("cityATz").value},
-        cityB: {label: $("cityBName").value.trim() || DEFAULTS.cityB.label, tz: $("cityBTz").value}
+        nextMeet: $("nextDateInput2").value || null
       });
       renderFeed(); renderList();
       closePopover();
@@ -1046,7 +1071,7 @@
     if (!state.myName){
       setTimeout(function(){
         openPopover();
-        showToast("Welcome — tell us your name so signals and additions are attributed to you.", 5000);
+        showToast("Welcome — pick who you are so signals and additions are attributed to you.", 5000);
       }, 500);
     }
   }
